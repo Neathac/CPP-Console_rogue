@@ -1,0 +1,6 @@
+﻿  ConsoleRogue.cpp
+C:\Users\Dank memer\source\repos\grafm\ConsoleRogue\ConsoleRogue\ConsoleRogue.cpp(4,18): error C4996: 'TCODConsole::initRoot': This way of initializing libtcod is deprecated.  See the documentation for how to use tcod::new_context.
+C:\Users\Dank memer\source\repos\grafm\ConsoleRogue\ConsoleRogue\ConsoleRogue.cpp(5,26): error C4996: 'TCODConsole::isWindowClosed': This function is not compatible with contexts. Use SDL for events and check for SDL_QUIT.
+C:\Users\Dank memer\source\repos\grafm\ConsoleRogue\ConsoleRogue\ConsoleRogue.cpp(7,21): error C4996: 'TCODSystem::checkForEvent': This API is deprecated, use SDL_PollEvent instead.
+C:\Users\Dank memer\source\repos\grafm\ConsoleRogue\ConsoleRogue\ConsoleRogue.cpp(9,26): error C4996: 'TCODConsole::putChar': was declared deprecated
+C:\Users\Dank memer\source\repos\grafm\ConsoleRogue\ConsoleRogue\ConsoleRogue.cpp(10,22): error C4996: 'TCODConsole::flush': This function does not support contexts.
