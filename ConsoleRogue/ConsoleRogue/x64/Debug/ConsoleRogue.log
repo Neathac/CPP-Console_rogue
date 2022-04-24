@@ -1,2 +1,7 @@
-﻿  Map.cpp
+﻿  Actor.cpp
+  Game.cpp
+  Map.cpp
+  Player.cpp
+  main.cpp
+  Generating Code...
   ConsoleRogue.vcxproj -> C:\Users\Dank memer\source\repos\grafm\ConsoleRogue\x64\Debug\ConsoleRogue.exe

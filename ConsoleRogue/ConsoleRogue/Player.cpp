@@ -21,8 +21,8 @@ void Player::recalculateActiveSight(Map& playArea) {
 		for (int yIndex = -1; yIndex < 2; yIndex += 2) {
 			for (auto& vector : this->dirsToCheck) {
 				for (auto& arrElement : vector) {
-					playArea.visited[xIndex*arrElement[0]][yIndex*arrElement[1]] = 2;
-					if (playArea.isSightBlocker(xIndex*arrElement[0], yIndex*arrElement[1])) {
+					playArea.visited[this->position[0] + (xIndex*arrElement[0])][this->position[1] + (yIndex * arrElement[1])] = 2;
+					if (playArea.isSightBlocker(this->position[0] + (xIndex*arrElement[0]), this->position[1] + (yIndex*arrElement[1]))) {
 						break;
 					}
 				}

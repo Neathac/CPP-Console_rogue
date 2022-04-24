@@ -16,6 +16,9 @@
     <Filter Include="Source Files\Actors">
       <UniqueIdentifier>{119cd42e-f6a6-4ef6-bf11-b5f773eb4f05}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ConsoleSections">
+      <UniqueIdentifier>{9a8b1d31-9676-4c48-b81f-8136e0d1d038}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -24,11 +27,17 @@
     <ClCompile Include="Actor.cpp">
       <Filter>Source Files\Actors</Filter>
     </ClCompile>
-    <ClCompile Include="Map.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Player.cpp">
       <Filter>Source Files\Actors</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Map.cpp">
+      <Filter>Source Files\ConsoleSections</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerStatSection.cpp">
+      <Filter>Source Files\ConsoleSections</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

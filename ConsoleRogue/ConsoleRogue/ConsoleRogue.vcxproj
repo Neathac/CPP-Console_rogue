@@ -152,9 +152,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="PlayerStatSection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\SDL2-2.0.20\lib\x64\SDL2.dll" />
