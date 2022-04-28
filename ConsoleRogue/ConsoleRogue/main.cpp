@@ -6,7 +6,8 @@
 #undef main
 
 int main() {
-    Game gameState = Game();
+    Palette* palette = new Palette();
+    Game* gameState = new Game(*palette);
     while (1) {  // Game loop.
         // TCOD_console_clear(console.get());
         SDL_Event event;
@@ -18,16 +19,16 @@ int main() {
             case SDL_KEYDOWN:
                 switch (event.key.keysym.sym) {
                 case SDLK_RIGHT:
-                    gameState.playerMove(DIRECTIONS::MOVE_RIGHT);
+                    gameState->playerMove(DIRECTIONS::MOVE_RIGHT);
                     break;
                 case SDLK_UP:
-                    gameState.playerMove(DIRECTIONS::MOVE_UP);
+                    gameState->playerMove(DIRECTIONS::MOVE_UP);
                     break;
                 case SDLK_LEFT:
-                    gameState.playerMove(DIRECTIONS::MOVE_LEFT);
+                    gameState->playerMove(DIRECTIONS::MOVE_LEFT);
                     break;
                 case SDLK_DOWN:
-                    gameState.playerMove(DIRECTIONS::MOVE_DOWN);
+                    gameState->playerMove(DIRECTIONS::MOVE_DOWN);
                     break;
                 }
                 

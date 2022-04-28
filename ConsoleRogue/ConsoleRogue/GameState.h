@@ -1,12 +1,17 @@
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
-#define PLAY_AREA_WIDTH 60
-#define PLAY_AREA_HEIGHT 80
 #define CONSOLE_WIDTH 100
 #define CONSOLE_HEIGHT 80
+
+#define PLAY_AREA_HEIGHT 60
+#define PLAY_AREA_WIDTH 80
+
 #define STAT_AREA_WIDTH 40
-#define STAT_AREA_HEIGHT 80
+#define STAT_AREA_HEIGHT 60
+
+#define EVENT_AREA_WIDTH 100
+#define EVENT_AREA_HEIGHT 40
 
 #include "libtcod.hpp"
 #include "SDL.h"
@@ -14,6 +19,8 @@
 #undef main
 #include <vector>
 #include <random>
+#include <queue>
+#include <iostream>
 
 enum DIRECTIONS {
 	MOVE_UP,
@@ -37,39 +44,70 @@ private:
 class Palette {
 public:
 	Palette(){
-		inSightWall = tcod::ColorRGB(255, 0, 0); // Red #ff0000
-		outOfSightWall = tcod::ColorRGB(128, 0, 0); // Red #800000
-		inSightFloor = tcod::ColorRGB(255, 255, 255); // White #ffffff
-		outOfSightFloor = tcod::ColorRGB(128, 128, 128); // White #808080
+		inSightWoodWall = tcod::ColorRGB(102, 51, 0); // Brown #663300
+		outOfSightWoodWall = tcod::ColorRGB(77, 38, 0); // Brown #4d2600
+		inSightGrassFloor = tcod::ColorRGB(0, 204, 68); // Green #00cc44
+		outOfSightGrassFloor = tcod::ColorRGB(0, 102, 34); // Green #006622
 		playerCharacter = tcod::ColorRGB(255, 255, 255); // White #ffffff
-		statBackground = tcod::ColorRGB(0, 0, 255);
+		statBackground = tcod::ColorRGB(0, 0, 255); // Blue
+		statHeaders = tcod::ColorRGB(255, 255, 255); // White #ffffff
+		eventBackground = tcod::ColorRGB(255, 255, 255); // White #ffffff
+		eventHeaders = tcod::ColorRGB(0, 0, 0); // Black #000000
 	}
-	tcod::ColorRGB inSightWall;
-	tcod::ColorRGB outOfSightWall;
-	tcod::ColorRGB inSightFloor;
-	tcod::ColorRGB outOfSightFloor;
+	tcod::ColorRGB inSightWoodWall;
+	tcod::ColorRGB outOfSightWoodWall;
+	tcod::ColorRGB inSightGrassFloor;
+	tcod::ColorRGB outOfSightGrassFloor;
 	tcod::ColorRGB playerCharacter;
 	tcod::ColorRGB statBackground;
+	tcod::ColorRGB statHeaders;
+	tcod::ColorRGB eventBackground;
+	tcod::ColorRGB eventHeaders;
+};
+
+class Room {
+
+};
+
+// Simply stores current level metadata for better modularity
+class Level {
+public:
+	Level(tcod::ColorRGB inSightWall, const tcod::ColorRGB& outOfSightWall,
+		const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor) : 
+		inSightWall(inSightWall),
+		inSightFloor(inSightFloor), 
+		outOfSightWall(outOfSightWall),
+		outOfSightFloor(outOfSightFloor) {
+		std::cout << inSightWall.r << std::endl;
+	}
+	const tcod::ColorRGB& inSightWall;
+	const tcod::ColorRGB& outOfSightWall;
+	const tcod::ColorRGB& inSightFloor;
+	const tcod::ColorRGB& outOfSightFloor;
 };
 
 class Map {
 public:
-	Map(){}
-	Map(const Palette& palette) : palette(std::make_unique<Palette>(palette)) {
+	Map(const Palette& palette) : palette(std::make_unique<Palette>(palette)), level(new Level(palette.inSightWoodWall,
+		palette.outOfSightWoodWall, palette.inSightGrassFloor, palette.outOfSightGrassFloor)) {
 		sightBlockers = { Tileset::wall };
 		setupNewPlayArea();
 	}
 	void setupNewPlayArea();
 	void drawWholeMap(tcod::Console& console, tcod::ContextPtr& context);
 	void setSingleTile(tcod::Console& console, const int& x, const int& y);
-	void generateNewLevel();
 	bool isSightBlocker(const int& x, const int& y);
 	void resetActiveSight();
+	void generateNewLevel(const int& difficultyLevel);
+	void createRoom(const int& x, const int& y);
+	void connectAdjecentRooms();
 
-	int visited[PLAY_AREA_HEIGHT][PLAY_AREA_WIDTH];
-	char tiles[PLAY_AREA_HEIGHT][PLAY_AREA_WIDTH];
+	int visited[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
+	char tiles[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
 	std::vector<char> sightBlockers;
 	std::unique_ptr<Palette> palette;
+	Level* level;
+	
 };
 
 class Actor {
@@ -127,19 +165,35 @@ private:
 
 class PlayerStatSection {
 public:
-	PlayerStatSection(){}
-	PlayerStatSection(const Palette& palette, const Player& player) : palette(std::make_unique<Palette>(palette)), player(std::make_unique<Player>(player)) {}
+	PlayerStatSection(const Palette& palette) : palette(std::make_unique<Palette>(palette)) {}
+	void setPlayer(const Player& player) { this->player = std::make_unique<Player>(player); }
+	void colorArea(tcod::Console& console, tcod::ContextPtr& context);
+	void drawTextFields(tcod::Console& console, tcod::ContextPtr& context);
+	void drawStatValues(tcod::Console& console, tcod::ContextPtr& context);
 private:
 	std::unique_ptr<Palette> palette;
 	std::unique_ptr<Player> player;
+};
+
+class EventSection {
+public:
+	EventSection(const Palette& palette) : palette(std::make_unique<Palette>(palette)) {}
 	void colorArea(tcod::Console& console, tcod::ContextPtr& context);
+	void newEvent(tcod::Console& console, tcod::ContextPtr& context, std::string eventDescription);
+private:
+	// TODO: Make types of events so they could be drawn in different colors?
+	// Could possibly remove the need for a palette pointer
+	void drawEvents(tcod::Console& console, tcod::ContextPtr& context);
+	std::unique_ptr<Palette> palette;
+	std::queue<std::string> events;
 };
 
 class Game {
 public:
-	Game() : palette(), player() {
-		playArea = new Map(palette);
+	Game(const Palette& palette) :  player(), playArea(palette), statSection(palette), eventSection(palette) {
+
 		console = tcod::Console{ CONSOLE_WIDTH, CONSOLE_HEIGHT };  // Main console.
+
 		// Configure the context.
 		auto params = TCOD_ContextParams{};
 		params.tcod_version = TCOD_COMPILEDVERSION;  // This is required.
@@ -148,11 +202,23 @@ public:
 		params.sdl_window_flags = SDL_WINDOW_SHOWN;
 		params.vsync = true;
 		context = tcod::new_context(params);
+
 		// Initialise all tiles
 		playArea.setupNewPlayArea();
+
+		// Initialise and sketch out Stat section of console
+		statSection.setPlayer(player);
+		statSection.colorArea(console, context);
+		statSection.drawTextFields(console, context);
+		statSection.drawStatValues(console, context);
+
+		// Initialise eventArea
+		eventSection.colorArea(console, context);
+
 		// Place the player in the map
 		player.placeSelf(playArea, 5, 5);
 		player.recalculateActiveSight(playArea);
+
 		// Render the entire map
 		playArea.drawWholeMap(console, context);
 	}
@@ -163,8 +229,9 @@ private:
 	tcod::ContextPtr context;
 	Map playArea;
 	Player player;
+	PlayerStatSection statSection;
+	EventSection eventSection;
 	std::vector<Actor> entities;
-	Palette palette;
 };
 
 #endif 

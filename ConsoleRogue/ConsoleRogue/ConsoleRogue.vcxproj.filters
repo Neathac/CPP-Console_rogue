@@ -39,6 +39,9 @@
     <ClCompile Include="PlayerStatSection.cpp">
       <Filter>Source Files\ConsoleSections</Filter>
     </ClCompile>
+    <ClCompile Include="EventSection.cpp">
+      <Filter>Source Files\ConsoleSections</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="libs\SDL2-2.0.20\lib\x64\SDL2.dll">
