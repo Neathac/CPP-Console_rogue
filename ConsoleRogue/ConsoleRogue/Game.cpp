@@ -15,6 +15,5 @@ void Game::playerMove(DIRECTIONS direction) {
 		this->player.placeSelf(this->playArea, this->player.position[0] + 1, this->player.position[1]);		
 		break;
 	}
-	this->player.recalculateActiveSight(this->playArea);
 	this->playArea.drawWholeMap(this->console, this->context);
 }

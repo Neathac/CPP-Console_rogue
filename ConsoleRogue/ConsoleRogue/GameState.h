@@ -22,11 +22,33 @@
 #include <queue>
 #include <iostream>
 
-enum DIRECTIONS {
+static int getRandomNumber(const int& from, const int& to) {
+	int low = from;
+	int high = to;
+	if (from > to) { // Preventing headaches from misordered parameters
+		low = to;
+		high = from;
+	}
+	std::random_device rd; // obtain a random number from hardware
+	std::mt19937 gen(rd()); // seed the generator
+	std::uniform_int_distribution<> distr(low, high); // define the range
+	return distr(gen);
+}
+
+enum class DIRECTIONS {
 	MOVE_UP,
 	MOVE_DOWN,
 	MOVE_LEFT,
 	MOVE_RIGHT,
+};
+
+enum class ROOM_TYPE {
+	CORRIDOR,
+	CAVE,
+	ROOM,
+	BLOCKER,
+	DISJOINT,
+	SAFE_ROOM,
 };
 
 // Simply store all used characters here for easy global changes
@@ -65,21 +87,103 @@ public:
 	tcod::ColorRGB eventHeaders;
 };
 
-class Room {
+class Room; // Used by RoomGenerator, but Room uses RoomGenerator too
+class Player; // Used by Map, but Map uses Player too
 
+class RoomGenerator {
+public:
+	static void generateSafeRoom(Room& room);
+	static void generateDisjointRoom(Room& room);
+	static void generateCorridorRoom(Room& room, Room& fromRoom, Room& toRoom, bool hasWalls);
+	static void generateCaveRoom(Room& room);
+	static void generateBlockerRoom(Room& room);
+private:
+	RoomGenerator(){} // This class provides only static methods - No need to instantiate it
+	static void createWall(Room& room, const std::array<int, 2>& from, const std::array<int, 2>& to, const bool& hasExit);
+};
+
+class Room {
+public:
+	Room(const int& roomDiameter, const int& roomCenterX, const int& roomCenterY, ROOM_TYPE roomType) : diameter(roomDiameter), wallPositions(), 
+		actorPositions(), pickupPositions(), hazardPositions(), floorPositions() {
+		center[0] = roomCenterX;
+		center[1] = roomCenterY;
+		switch (roomType) {
+		case ROOM_TYPE::SAFE_ROOM:
+			RoomGenerator::generateSafeRoom(*this);
+			break;
+		case ROOM_TYPE::DISJOINT:
+			RoomGenerator::generateDisjointRoom(*this);
+			break;
+		case ROOM_TYPE::ROOM:
+			RoomGenerator::generateSafeRoom(*this);
+			break;
+		case ROOM_TYPE::CAVE:
+			RoomGenerator::generateSafeRoom(*this);
+			break;
+		}
+	};
+
+	Room(Room& from, Room& to, bool hasWalls) : wallPositions(),
+		actorPositions(), pickupPositions(), hazardPositions(), floorPositions() {
+		RoomGenerator::generateCorridorRoom(*this ,from, to, hasWalls);
+	};
+	int diameter;
+	std::array<int, 2> center;
+	std::vector<std::array<int, 2>> wallPositions;
+	std::vector<std::array<int, 2>> actorPositions;
+	std::vector<std::array<int, 2>> pickupPositions;
+	std::vector<std::array<int, 2>> hazardPositions;
+	std::vector<std::array<int, 2>> floorPositions;
 };
 
 // Simply stores current level metadata for better modularity
 class Level {
 public:
 	Level(tcod::ColorRGB inSightWall, const tcod::ColorRGB& outOfSightWall,
-		const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor) : 
-		inSightWall(inSightWall),
+		const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor, const int& difficulty) : 
+		inSightWall(inSightWall), // Known bug - The saved value isn't once anywhere in the whole project for some reason
 		inSightFloor(inSightFloor), 
 		outOfSightWall(outOfSightWall),
-		outOfSightFloor(outOfSightFloor) {
-		std::cout << inSightWall.r << std::endl;
+		outOfSightFloor(outOfSightFloor),
+		difficultyLevel(difficulty) {
+			int xPolarity;
+			if (getRandomNumber(1,2)%2 == 0) {
+				xPolarity = -1;
+			}
+			else {
+				xPolarity = 1;
+			}
+			int yPolarity;
+			if (getRandomNumber(1, 2) % 2 == 0) {
+				yPolarity = -1;
+			}
+			else {
+				yPolarity = 1;
+			}
+
+			safeRoom = new Room(4, PLAY_AREA_WIDTH/2, PLAY_AREA_HEIGHT/2, ROOM_TYPE::SAFE_ROOM); // Safe room is always the same
+			exitRoom = new Room(4, (PLAY_AREA_WIDTH / 2) + xPolarity*getRandomNumber(9, (PLAY_AREA_WIDTH / 2)-5), (PLAY_AREA_HEIGHT / 2) + yPolarity * getRandomNumber(9, (PLAY_AREA_HEIGHT / 2) - 5), ROOM_TYPE::SAFE_ROOM);
+			corridors.push_back(new Room(*safeRoom, *exitRoom, true));
+			if (difficultyLevel < 3) {
+				this->generateEasyEnvironment();
+			}
+/*			else if (difficultyLevel > 2 && difficultyLevel < 6) {
+				this->generateMediumEnvironment();
+			}
+			else if (difficultyLevel > 5) {
+				this->generateDifficultEnvironment();
+			}
+			*/
 	}
+	void generateEasyEnvironment();
+	void generateMediumEnvironment();
+	void generateDifficultEnvironment();
+	int difficultyLevel;
+	Room* safeRoom;
+	Room* exitRoom;
+	std::vector<Room*> rooms;
+	std::vector<Room*> corridors;
 	const tcod::ColorRGB& inSightWall;
 	const tcod::ColorRGB& outOfSightWall;
 	const tcod::ColorRGB& inSightFloor;
@@ -89,25 +193,23 @@ public:
 class Map {
 public:
 	Map(const Palette& palette) : palette(std::make_unique<Palette>(palette)), level(new Level(palette.inSightWoodWall,
-		palette.outOfSightWoodWall, palette.inSightGrassFloor, palette.outOfSightGrassFloor)) {
+		palette.outOfSightWoodWall, palette.inSightGrassFloor, palette.outOfSightGrassFloor, 1)) // The last argument always instantiates level 1 environment
+	{
 		sightBlockers = { Tileset::wall };
-		setupNewPlayArea();
 	}
-	void setupNewPlayArea();
+	void setupNewPlayArea(Player& player, tcod::Console& console, tcod::ContextPtr& context);
 	void drawWholeMap(tcod::Console& console, tcod::ContextPtr& context);
 	void setSingleTile(tcod::Console& console, const int& x, const int& y);
 	bool isSightBlocker(const int& x, const int& y);
 	void resetActiveSight();
 	void generateNewLevel(const int& difficultyLevel);
-	void createRoom(const int& x, const int& y);
-	void connectAdjecentRooms();
+	void drawRooms();
 
 	int visited[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
 	char tiles[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
 	std::vector<char> sightBlockers;
 	std::unique_ptr<Palette> palette;
 	Level* level;
-	
 };
 
 class Actor {
@@ -203,24 +305,17 @@ public:
 		params.vsync = true;
 		context = tcod::new_context(params);
 
-		// Initialise all tiles
-		playArea.setupNewPlayArea();
-
 		// Initialise and sketch out Stat section of console
 		statSection.setPlayer(player);
 		statSection.colorArea(console, context);
 		statSection.drawTextFields(console, context);
 		statSection.drawStatValues(console, context);
 
+		//Initialise play area
+		playArea.setupNewPlayArea(player,console, context);
+
 		// Initialise eventArea
 		eventSection.colorArea(console, context);
-
-		// Place the player in the map
-		player.placeSelf(playArea, 5, 5);
-		player.recalculateActiveSight(playArea);
-
-		// Render the entire map
-		playArea.drawWholeMap(console, context);
 	}
 	void playerMove(DIRECTIONS direction);
 	void updateEntityActivity(); // TODO: On player action, update visible entities

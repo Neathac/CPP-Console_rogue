@@ -13,6 +13,7 @@ void Player::placeSelf(Map& playArea, int x, int y) {
 		playArea.visited[x][y] = 2;
 		this->position[0] = x;
 		this->position[1] = y;
+		recalculateActiveSight(playArea);
 	}
 }
 

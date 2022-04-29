@@ -7,7 +7,7 @@
 
 using namespace std;
 
-void Map::setupNewPlayArea() {
+void Map::setupNewPlayArea(Player& player, tcod::Console& console, tcod::ContextPtr& context) {
 	// Set up play area borders
 	for (int i = 0; i < PLAY_AREA_HEIGHT; ++i) {
 		this->visited[0][i] = 0;
@@ -24,10 +24,13 @@ void Map::setupNewPlayArea() {
 	// Fill the map with floor
 	for (int i = 1; i < PLAY_AREA_WIDTH - 1; ++i) {
 		for (int j = 1; j < PLAY_AREA_HEIGHT - 1; ++j) {
-			this->visited[i][j] = 0;
+			this->visited[i][j] = 1;
 			this->tiles[i][j] = Tileset::floor;
 		}
 	}
+	player.placeSelf(*this, this->level->safeRoom->center[0], this->level->safeRoom->center[1]);
+	this->drawRooms();
+	drawWholeMap(console, context);
 	return;
 }
 
@@ -81,14 +84,36 @@ void Map::generateNewLevel(const int& difficultyLevel) {
 	// We call the level constructor again
 	if (difficultyLevel < 3) {
 		this->level = new Level(palette->inSightWoodWall,
-			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor);
+			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, difficultyLevel);
 	}
 	else if (difficultyLevel > 2 && difficultyLevel < 6) {
 		this->level = new Level(palette->inSightWoodWall,
-			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor);
+			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, difficultyLevel);
 	}
 	else if (difficultyLevel > 5) {
 		this->level = new Level(palette->inSightWoodWall,
-			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor);
+			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, difficultyLevel);
+	}
+}
+
+void Map::drawRooms() {
+	for (auto &coord : this->level->safeRoom->wallPositions) {
+		this->tiles[coord[0]][coord[1]] = Tileset::wall;
+	}
+	for (auto& coord : this->level->exitRoom->wallPositions) {
+		this->tiles[coord[0]][coord[1]] = Tileset::wall;
+	}
+	for (auto& room : this->level->rooms) {
+		for (auto& coord : room->wallPositions) {
+			this->tiles[coord[0]][coord[1]] = Tileset::wall;
+		}
+	}
+	for (auto& room : this->level->corridors) {
+		for (auto& coord : room->wallPositions) {
+			this->tiles[coord[0]][coord[1]] = Tileset::wall;
+		}
+		for (auto& coord : room->floorPositions) {
+			this->tiles[coord[0]][coord[1]] = Tileset::floor;
+		}
 	}
 }

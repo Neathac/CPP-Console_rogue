@@ -19,6 +19,9 @@
     <Filter Include="Source Files\ConsoleSections">
       <UniqueIdentifier>{9a8b1d31-9676-4c48-b81f-8136e0d1d038}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\PlayEnvironment">
+      <UniqueIdentifier>{78984bf1-a8b5-4484-add3-0aa5ffca853a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -41,6 +44,12 @@
     </ClCompile>
     <ClCompile Include="EventSection.cpp">
       <Filter>Source Files\ConsoleSections</Filter>
+    </ClCompile>
+    <ClCompile Include="Level.cpp">
+      <Filter>Source Files\PlayEnvironment</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomGenerator.cpp">
+      <Filter>Source Files\PlayEnvironment</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
