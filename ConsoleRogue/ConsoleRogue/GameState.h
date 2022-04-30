@@ -84,10 +84,9 @@ private:
 
 class Pickup {
 public:
-	Pickup(PICKUP_TYPE type, std::array<int, 2> position) : type(type), position(position), pickedUp(false) {}
+	Pickup(PICKUP_TYPE type, std::array<int, 2> position) : type(type), position(position) {}
 	PICKUP_TYPE type;
 	std::array<int, 2> position;
-	bool pickedUp; // More efective to just  ignore these pickups then remove them from a random position in vector
 };
 
 class Palette {
@@ -131,6 +130,32 @@ public:
 private:
 	RoomGenerator(){} // This class provides only static methods - No need to instantiate it
 	static void createWall(Room& room, const std::array<int, 2>& from, const std::array<int, 2>& to, const bool& hasExit);
+};
+
+class Actor {
+public:
+	Actor() {
+		position[0] = 5;
+		position[1] = 5;
+		status = Tileset::floor;
+		visible = false;
+		health = 5;
+		maxHealth = 5;
+		speed = 5;
+		damage = 5;
+		armor = 5;
+		range = 5;
+	}
+	int position[2];
+	char status; // Store tile the entity replaced (floor is underneath the player) - to open way for possible status effects
+	bool visible;
+	int health;
+	int maxHealth;
+	int speed;
+	int damage;
+	int armor;
+	int range;
+	void moveActor(const int& xChange, const int& yChange);
 };
 
 class Room {
@@ -221,6 +246,7 @@ public:
 	std::vector<Room*> rooms;
 	std::vector<Room*> corridors;
 	std::vector<Pickup*> pickups;
+	std::vector<Actor*> hostileActors;
 	const tcod::ColorRGB& inSightWall;
 	const tcod::ColorRGB& outOfSightWall;
 	const tcod::ColorRGB& inSightFloor;
@@ -233,10 +259,11 @@ private:
 
 class Map {
 public:
-	Map(const Palette& palette) : palette(std::make_unique<Palette>(palette)), level(new Level(palette.inSightWoodWall,
-		palette.outOfSightWoodWall, palette.inSightGrassFloor, palette.outOfSightGrassFloor, palette.outOfSightPickup, palette.inSightPickup, 1)) // The last argument always instantiates level 1 environment
+	Map(const std::shared_ptr<Palette> palette) : palette(palette), level(new Level(palette->inSightWoodWall,
+		palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, palette->outOfSightPickup, palette->inSightPickup, 1)) // The last argument always instantiates level 1 environment
 	{
-		sightBlockers = { Tileset::wall };
+		sightBlockers = { Tileset::wall, Tileset::armorPickup, Tileset::damagePickup, Tileset::exit, Tileset::healthRefillPickup,
+			Tileset::healthUpgradePickup, Tileset::rangePickup, Tileset::speedPickup };
 	}
 	void setupNewPlayArea(Player& player, tcod::Console& console, tcod::ContextPtr& context);
 	void drawWholeMap(tcod::Console& console, tcod::ContextPtr& context);
@@ -250,34 +277,8 @@ public:
 	int visited[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
 	char tiles[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
 	std::vector<char> sightBlockers;
-	std::unique_ptr<Palette> palette;
+	std::shared_ptr<Palette> palette;
 	Level* level;
-};
-
-class Actor {
-public:
-	Actor() {
-		position[0] = 5;
-		position[1] = 5;
-		status = Tileset::floor;
-		visible = false;
-		health = 5;
-		maxHealth = 5;
-		speed = 5;
-		damage = 5;
-		armor = 5;
-		range = 5;
-	}
-	int position[2];
-	char status; // Store tile the entity replaced (floor is underneath the player) - to open way for possible status effects
-	bool visible;
-	int health;
-	int maxHealth;
-	int speed;
-	int damage;
-	int armor;
-	int range;
-	void moveActor(const int& xChange, const int& yChange);
 };
 
 class Player : public Actor {
@@ -300,7 +301,8 @@ public:
 	}
 	void placeSelf(Map& playArea, int x, int y);
 	void recalculateActiveSight(Map& playArea);
-	void playerAction(Map& playArea);
+	void playerAttack(Actor& actor);
+	void playerInterract(Pickup& pickup);
 	
 private:
 	std::vector<std::vector<std::array<int, 2>>> dirsToCheck;
@@ -309,32 +311,32 @@ private:
 
 class PlayerStatSection {
 public:
-	PlayerStatSection(const Palette& palette) : palette(std::make_unique<Palette>(palette)) {}
-	void setPlayer(const Player& player) { this->player = std::make_unique<Player>(player); }
+	PlayerStatSection(const std::shared_ptr<Palette> palette) : palette(palette) {}
+	void setPlayer(const std::shared_ptr<Player> player) { this->player = player; }
 	void colorArea(tcod::Console& console, tcod::ContextPtr& context);
 	void drawTextFields(tcod::Console& console, tcod::ContextPtr& context);
 	void drawStatValues(tcod::Console& console, tcod::ContextPtr& context);
 private:
-	std::unique_ptr<Palette> palette;
-	std::unique_ptr<Player> player;
+	std::shared_ptr<Palette> palette;
+	std::shared_ptr<Player> player;
 };
 
 class EventSection {
 public:
-	EventSection(const Palette& palette) : palette(std::make_unique<Palette>(palette)) {}
+	EventSection(const std::shared_ptr<Palette> palette) : palette(palette) {}
 	void colorArea(tcod::Console& console, tcod::ContextPtr& context);
 	void newEvent(tcod::Console& console, tcod::ContextPtr& context, std::string eventDescription);
 private:
 	// TODO: Make types of events so they could be drawn in different colors?
 	// Could possibly remove the need for a palette pointer
 	void drawEvents(tcod::Console& console, tcod::ContextPtr& context);
-	std::unique_ptr<Palette> palette;
+	std::shared_ptr<Palette> palette;
 	std::queue<std::string> events;
 };
 
 class Game {
 public:
-	Game(const Palette& palette) :  player(), playArea(palette), statSection(palette), eventSection(palette) {
+	Game(const std::shared_ptr<Palette> palette) :  player(new Player()), playArea(palette), statSection(palette), eventSection(palette) {
 
 		console = tcod::Console{ CONSOLE_WIDTH, CONSOLE_HEIGHT };  // Main console.
 
@@ -354,22 +356,25 @@ public:
 		statSection.drawStatValues(console, context);
 
 		//Initialise play area
-		playArea.setupNewPlayArea(player,console, context);
+		playArea.setupNewPlayArea(*player ,console, context);
+		
 
+		// Instantiate player vision
+		// This does not cause the bug to manifest
+		player->recalculateActiveSight(playArea);
+		playArea.drawWholeMap(console, context);
 		// Initialise eventArea
 		eventSection.colorArea(console, context);
 	}
 	void playerMove(DIRECTIONS direction);
-	void updateEntityActivity(); // TODO: On player action, update visible entities
+	void playerInterract();
 private:
 	tcod::Console console;
 	tcod::ContextPtr context;
 	Map playArea;
-	Player player;
+	std::shared_ptr<Player> player;
 	PlayerStatSection statSection;
 	EventSection eventSection;
-	std::vector<Actor> entities;
 };
 
 #endif 
-

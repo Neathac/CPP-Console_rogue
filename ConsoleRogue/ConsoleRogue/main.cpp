@@ -7,7 +7,7 @@
 
 int main() {
     Palette* palette = new Palette();
-    Game* gameState = new Game(*palette);
+    Game* gameState = new Game(std::make_shared<Palette> (*palette));
     while (1) {  // Game loop.
         // TCOD_console_clear(console.get());
         SDL_Event event;
@@ -29,6 +29,9 @@ int main() {
                     break;
                 case SDLK_DOWN:
                     gameState->playerMove(DIRECTIONS::MOVE_DOWN);
+                    break;
+                case SDLK_SPACE:
+                    gameState->playerInterract();
                     break;
                 }
                 

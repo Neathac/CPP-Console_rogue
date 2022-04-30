@@ -2,6 +2,8 @@
 #include "libtcod.hpp"
 #include "SDL.h"
 #include <string>
+#include <ctype.h>
+#include <stdio.h>
 // SDL defines main and causes errors
 #undef main
 
@@ -47,6 +49,9 @@ void Map::drawWholeMap(tcod::Console& console, tcod::ContextPtr& context) {
 void Map::setSingleTile(tcod::Console& console, const int& x, const int& y) {
 	std::string toPrint = "";
 	toPrint += tiles[x][y];
+	// The problems symptom is here.
+	// Tiles that are supposed to be visible walls are left empty after movement
+	
 	// The differentiation is necesarry for differences in behavior for tile in active FOV
 	switch (this->tiles[x][y]) {
 	case Tileset::wall:

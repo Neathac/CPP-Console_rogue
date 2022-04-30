@@ -13,7 +13,6 @@ void Player::placeSelf(Map& playArea, int x, int y) {
 		playArea.visited[x][y] = 2;
 		this->position[0] = x;
 		this->position[1] = y;
-		recalculateActiveSight(playArea);
 	}
 }
 
@@ -29,6 +28,28 @@ void Player::recalculateActiveSight(Map& playArea) {
 				}
 			}
 		}
+	}	
+}
+
+void Player::playerInterract(Pickup& pickup) {
+	switch (pickup.type) {
+	case PICKUP_TYPE::ARMOR:
+		this->armor += 1;
+		break;
+	case PICKUP_TYPE::DAMAGE:
+		this->damage += 1;
+		break;
+	case PICKUP_TYPE::HEALTH_REFILL:
+		this->health = this->maxHealth;
+		break;
+	case PICKUP_TYPE::HEALTH_UPGRADE:
+		this->maxHealth += 2;
+		break;
+	case PICKUP_TYPE::RANGE:
+		this->range += 1;
+		break;
+	case PICKUP_TYPE::SPEED:
+		this->speed += 5;
+		break;
 	}
-	
 }
