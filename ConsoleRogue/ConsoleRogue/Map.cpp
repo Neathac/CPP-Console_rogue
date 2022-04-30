@@ -30,6 +30,7 @@ void Map::setupNewPlayArea(Player& player, tcod::Console& console, tcod::Context
 	}
 	player.placeSelf(*this, this->level->safeRoom->center[0], this->level->safeRoom->center[1]);
 	this->drawRooms();
+	this->drawPickups();
 	drawWholeMap(console, context);
 	return;
 }
@@ -59,6 +60,10 @@ void Map::setSingleTile(tcod::Console& console, const int& x, const int& y) {
 	case Tileset::player:
 		tcod::print(console, { x,y }, toPrint, palette->playerCharacter, std::nullopt);
 		break;
+	default: // Pickups
+		if (this->visited[x][y] == 2) { tcod::print(console, { x,y }, toPrint, level->inSightPickup, std::nullopt); }
+		else if (this->visited[x][y] == 1) { tcod::print(console, { x,y }, toPrint, level->outOfSightPickup, std::nullopt); }
+		break;
 	}
 }
 
@@ -84,15 +89,15 @@ void Map::generateNewLevel(const int& difficultyLevel) {
 	// We call the level constructor again
 	if (difficultyLevel < 3) {
 		this->level = new Level(palette->inSightWoodWall,
-			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, difficultyLevel);
+			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, palette->outOfSightPickup, palette->inSightPickup, difficultyLevel);
 	}
 	else if (difficultyLevel > 2 && difficultyLevel < 6) {
 		this->level = new Level(palette->inSightWoodWall,
-			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, difficultyLevel);
+			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, palette->outOfSightPickup, palette->inSightPickup, difficultyLevel);
 	}
 	else if (difficultyLevel > 5) {
 		this->level = new Level(palette->inSightWoodWall,
-			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, difficultyLevel);
+			palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, palette->outOfSightPickup, palette->inSightPickup, difficultyLevel);
 	}
 }
 
@@ -114,6 +119,34 @@ void Map::drawRooms() {
 		}
 		for (auto& coord : room->floorPositions) {
 			this->tiles[coord[0]][coord[1]] = Tileset::floor;
+		}
+	}
+}
+
+void Map::drawPickups() {
+	for (auto& pickup : this->level->pickups) {
+		switch (pickup->type) {
+		case PICKUP_TYPE::EXIT:
+			tiles[pickup->position[0]][pickup->position[1]] = Tileset::exit;
+			break;
+		case PICKUP_TYPE::ARMOR:
+			tiles[pickup->position[0]][pickup->position[1]] = Tileset::armorPickup;
+			break;
+		case PICKUP_TYPE::DAMAGE:
+			tiles[pickup->position[0]][pickup->position[1]] = Tileset::damagePickup;
+			break;
+		case PICKUP_TYPE::HEALTH_REFILL:
+			tiles[pickup->position[0]][pickup->position[1]] = Tileset::healthRefillPickup;
+			break;
+		case PICKUP_TYPE::HEALTH_UPGRADE:
+			tiles[pickup->position[0]][pickup->position[1]] = Tileset::healthUpgradePickup;
+			break;
+		case PICKUP_TYPE::RANGE:
+			tiles[pickup->position[0]][pickup->position[1]] = Tileset::rangePickup;
+			break;
+		case PICKUP_TYPE::SPEED:
+			tiles[pickup->position[0]][pickup->position[1]] = Tileset::speedPickup;
+			break;
 		}
 	}
 }

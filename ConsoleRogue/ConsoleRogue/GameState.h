@@ -51,16 +51,43 @@ enum class ROOM_TYPE {
 	SAFE_ROOM,
 };
 
+// Not treating exit as a pickup would introduce pointless extra complexity. It behaves like one, we just don't randomly generate more
+enum class PICKUP_TYPE {
+	EXIT = 0,
+	DAMAGE = 1,
+	ARMOR = 2,
+	SPEED = 3,
+	HEALTH_REFILL = 4,
+	HEALTH_UPGRADE = 5,
+	RANGE = 6,
+	_count = 7,
+};
+
 // Simply store all used characters here for easy global changes
 class Tileset {
 public:
 	static const char wall = '#';
 	static const char player = '@';
 	static const char floor = '.';
+	static const char exit = 'E';
+	static const char damagePickup = 'D';
+	static const char speedPickup = 'S';
+	static const char armorPickup = 'A';
+	static const char healthRefillPickup = 'H';
+	static const char healthUpgradePickup = 'M';
+	static const char rangePickup = 'R';
 private:
 	// This class only holds static data
 	// Forbid creating its instances
 	Tileset() {}
+};
+
+class Pickup {
+public:
+	Pickup(PICKUP_TYPE type, std::array<int, 2> position) : type(type), position(position), pickedUp(false) {}
+	PICKUP_TYPE type;
+	std::array<int, 2> position;
+	bool pickedUp; // More efective to just  ignore these pickups then remove them from a random position in vector
 };
 
 class Palette {
@@ -75,6 +102,8 @@ public:
 		statHeaders = tcod::ColorRGB(255, 255, 255); // White #ffffff
 		eventBackground = tcod::ColorRGB(255, 255, 255); // White #ffffff
 		eventHeaders = tcod::ColorRGB(0, 0, 0); // Black #000000
+		inSightPickup = tcod::ColorRGB(255, 255, 0); // Yellow #ffff00
+		outOfSightPickup = tcod::ColorRGB(179, 179, 0); // Yellow #b3b300
 	}
 	tcod::ColorRGB inSightWoodWall;
 	tcod::ColorRGB outOfSightWoodWall;
@@ -85,6 +114,8 @@ public:
 	tcod::ColorRGB statHeaders;
 	tcod::ColorRGB eventBackground;
 	tcod::ColorRGB eventHeaders;
+	tcod::ColorRGB outOfSightPickup;
+	tcod::ColorRGB inSightPickup;
 };
 
 class Room; // Used by RoomGenerator, but Room uses RoomGenerator too
@@ -141,12 +172,16 @@ public:
 class Level {
 public:
 	Level(tcod::ColorRGB inSightWall, const tcod::ColorRGB& outOfSightWall,
-		const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor, const int& difficulty) : 
+		const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor, 
+		const tcod::ColorRGB& outOfSightPickup, const tcod::ColorRGB& inSightPickup, const int& difficulty) :
 		inSightWall(inSightWall), // Known bug - The saved value isn't once anywhere in the whole project for some reason
 		inSightFloor(inSightFloor), 
 		outOfSightWall(outOfSightWall),
 		outOfSightFloor(outOfSightFloor),
-		difficultyLevel(difficulty) {
+		difficultyLevel(difficulty),
+		inSightPickup(inSightPickup),
+		outOfSightPickup(outOfSightPickup)
+	{
 			int xPolarity;
 			if (getRandomNumber(1,2)%2 == 0) {
 				xPolarity = -1;
@@ -164,8 +199,9 @@ public:
 
 			safeRoom = new Room(4, PLAY_AREA_WIDTH/2, PLAY_AREA_HEIGHT/2, ROOM_TYPE::SAFE_ROOM); // Safe room is always the same
 			exitRoom = new Room(4, (PLAY_AREA_WIDTH / 2) + xPolarity*getRandomNumber(9, (PLAY_AREA_WIDTH / 2)-5), (PLAY_AREA_HEIGHT / 2) + yPolarity * getRandomNumber(9, (PLAY_AREA_HEIGHT / 2) - 5), ROOM_TYPE::SAFE_ROOM);
-			corridors.push_back(new Room(*safeRoom, *exitRoom, true));
+			
 			if (difficultyLevel < 3) {
+				corridors.push_back(new Room(*safeRoom, *exitRoom, false));
 				this->generateEasyEnvironment();
 			}
 /*			else if (difficultyLevel > 2 && difficultyLevel < 6) {
@@ -184,16 +220,21 @@ public:
 	Room* exitRoom;
 	std::vector<Room*> rooms;
 	std::vector<Room*> corridors;
+	std::vector<Pickup*> pickups;
 	const tcod::ColorRGB& inSightWall;
 	const tcod::ColorRGB& outOfSightWall;
 	const tcod::ColorRGB& inSightFloor;
 	const tcod::ColorRGB& outOfSightFloor;
+	const tcod::ColorRGB& inSightPickup;
+	const tcod::ColorRGB& outOfSightPickup;
+private:
+	void populatePickups();
 };
 
 class Map {
 public:
 	Map(const Palette& palette) : palette(std::make_unique<Palette>(palette)), level(new Level(palette.inSightWoodWall,
-		palette.outOfSightWoodWall, palette.inSightGrassFloor, palette.outOfSightGrassFloor, 1)) // The last argument always instantiates level 1 environment
+		palette.outOfSightWoodWall, palette.inSightGrassFloor, palette.outOfSightGrassFloor, palette.outOfSightPickup, palette.inSightPickup, 1)) // The last argument always instantiates level 1 environment
 	{
 		sightBlockers = { Tileset::wall };
 	}
@@ -204,6 +245,7 @@ public:
 	void resetActiveSight();
 	void generateNewLevel(const int& difficultyLevel);
 	void drawRooms();
+	void drawPickups();
 
 	int visited[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
 	char tiles[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
