@@ -26,7 +26,7 @@ void Map::setupNewPlayArea(Player& player, tcod::Console& console, tcod::Context
 	// Fill the map with floor
 	for (int i = 1; i < PLAY_AREA_WIDTH - 1; ++i) {
 		for (int j = 1; j < PLAY_AREA_HEIGHT - 1; ++j) {
-			this->visited[i][j] = 1;
+			this->visited[i][j] = 0;
 			this->tiles[i][j] = Tileset::floor;
 		}
 	}
