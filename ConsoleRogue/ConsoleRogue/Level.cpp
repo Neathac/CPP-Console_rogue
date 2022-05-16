@@ -46,6 +46,7 @@ void Level::generateEasyEnvironment() {
 		this->rooms.push_back(new Room(diameters[i], centers[i][0], centers[i][1], ROOM_TYPE::DISJOINT));
 	}
 	populatePickups();
+	populateEnemies();
 }
 
 void Level::populatePickups() {
@@ -59,6 +60,21 @@ void Level::populatePickups() {
 				this->pickups.push_back(new Pickup(PICKUP_TYPE(pickup), coords));
 			}
 			
+		}
+	}
+}
+
+void Level::populateEnemies() {
+	for (auto& room : rooms) {
+		if (getRandomNumber(1, 3) == 1) { // Roughly 1/2 rooms should have pickups
+			for (auto& coords : room->actorPositions) {
+				int pickup = getRandomNumber(int(PICKUP_TYPE::DAMAGE), int(PICKUP_TYPE::_count) - 1);
+				if (pickup == int(PICKUP_TYPE::RANGE)) { // More range is pretty overpowered, so we make it very rare
+					pickup = getRandomNumber(int(PICKUP_TYPE::DAMAGE), int(PICKUP_TYPE::_count) - 1);
+				}
+				this->pickups.push_back(new Pickup(PICKUP_TYPE(pickup), coords));
+			}
+
 		}
 	}
 }

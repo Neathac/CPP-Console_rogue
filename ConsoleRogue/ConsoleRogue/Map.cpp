@@ -49,13 +49,16 @@ void Map::drawWholeMap(tcod::Console& console, tcod::ContextPtr& context) {
 void Map::setSingleTile(tcod::Console& console, const int& x, const int& y) {
 	std::string toPrint = "";
 	toPrint += tiles[x][y];
-	// The problems symptom is here.
-	// Tiles that are supposed to be visible walls are left empty after movement
 	
 	// The differentiation is necesarry for differences in behavior for tile in active FOV
 	switch (this->tiles[x][y]) {
 	case Tileset::wall:
-		if (this->visited[x][y] == 2) {	tcod::print(console, { x,y }, toPrint, level->inSightWall , std::nullopt); }
+		if (this->visited[x][y] == 2) {	
+			// Hours wasted counter: 10
+			// This hard-coded color simply HAS to be here
+			// May god have mercy on the fool who dares remove it and catch the bug that will surely follow
+			tcod::print(console, { x,y }, toPrint, tcod::ColorRGB(102, 51, 0), std::nullopt);
+		}
 		else if (this->visited[x][y] == 1) { tcod::print(console, { x,y }, toPrint, level->outOfSightWall, std::nullopt); }
 		break;
 	case Tileset::floor:
@@ -151,6 +154,18 @@ void Map::drawPickups() {
 			break;
 		case PICKUP_TYPE::SPEED:
 			tiles[pickup->position[0]][pickup->position[1]] = Tileset::speedPickup;
+			break;
+		}
+	}
+}
+
+void Map::drawEnemies() {
+	for (auto& actor : this->level->hostileActors) {
+		switch (actor->type) {
+		case ACTOR_TYPE::GOBLIN:
+			tiles[actor->position[0]][actor->position[1]] = Tileset::goblin;
+			break;
+		default:
 			break;
 		}
 	}

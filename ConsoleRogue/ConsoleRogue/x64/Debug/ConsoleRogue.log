@@ -1,11 +1,2 @@
-﻿  Actor.cpp
-  EventSection.cpp
-  Game.cpp
-  Level.cpp
-  Map.cpp
-  Player.cpp
-  PlayerStatSection.cpp
-  RoomGenerator.cpp
-  main.cpp
-  Generating Code...
+﻿  Map.cpp
   ConsoleRogue.vcxproj -> C:\Users\Dank memer\source\repos\grafm\ConsoleRogue\x64\Debug\ConsoleRogue.exe

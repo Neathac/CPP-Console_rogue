@@ -63,10 +63,17 @@ enum class PICKUP_TYPE {
 	_count = 7,
 };
 
+enum class ACTOR_TYPE {
+	GOBLIN = 0,
+	UNDETERMINED = 1,
+	_count = 2,
+};
+
 // Simply store all used characters here for easy global changes
 class Tileset {
 public:
 	static const char wall = '#';
+	static const char goblin = 'G';
 	static const char player = '@';
 	static const char floor = '.';
 	static const char exit = 'E';
@@ -103,6 +110,7 @@ public:
 		eventHeaders = tcod::ColorRGB(0, 0, 0); // Black #000000
 		inSightPickup = tcod::ColorRGB(255, 255, 0); // Yellow #ffff00
 		outOfSightPickup = tcod::ColorRGB(179, 179, 0); // Yellow #b3b300
+		goblin = tcod::ColorRGB(255, 0, 0); // Red #ff0000
 	}
 	tcod::ColorRGB inSightWoodWall;
 	tcod::ColorRGB outOfSightWoodWall;
@@ -115,6 +123,7 @@ public:
 	tcod::ColorRGB eventHeaders;
 	tcod::ColorRGB outOfSightPickup;
 	tcod::ColorRGB inSightPickup;
+	tcod::ColorRGB goblin;
 };
 
 class Room; // Used by RoomGenerator, but Room uses RoomGenerator too
@@ -145,6 +154,7 @@ public:
 		damage = 5;
 		armor = 5;
 		range = 5;
+		type = ACTOR_TYPE::_count; // Just for initialization
 	}
 	int position[2];
 	char status; // Store tile the entity replaced (floor is underneath the player) - to open way for possible status effects
@@ -156,6 +166,7 @@ public:
 	int armor;
 	int range;
 	void moveActor(const int& xChange, const int& yChange);
+	ACTOR_TYPE type;
 };
 
 class Room {
@@ -255,6 +266,7 @@ public:
 	const tcod::ColorRGB& outOfSightPickup;
 private:
 	void populatePickups();
+	void populateEnemies();
 };
 
 class Map {
@@ -273,6 +285,7 @@ public:
 	void generateNewLevel(const int& difficultyLevel);
 	void drawRooms();
 	void drawPickups();
+	void drawEnemies();
 
 	int visited[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
 	char tiles[PLAY_AREA_WIDTH][PLAY_AREA_HEIGHT];
@@ -363,6 +376,7 @@ public:
 		// This does not cause the bug to manifest
 		player->recalculateActiveSight(playArea);
 		playArea.drawWholeMap(console, context);
+
 		// Initialise eventArea
 		eventSection.colorArea(console, context);
 	}
