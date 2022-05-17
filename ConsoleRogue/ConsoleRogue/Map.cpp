@@ -33,16 +33,18 @@ void Map::setupNewPlayArea(Player& player, tcod::Console& console, tcod::Context
 	player.placeSelf(*this, this->level->safeRoom->center[0], this->level->safeRoom->center[1]);
 	this->drawRooms();
 	this->drawPickups();
+	this->drawEnemies();
 	drawWholeMap(console, context);
 	return;
 }
 
 void Map::drawWholeMap(tcod::Console& console, tcod::ContextPtr& context) {
+	this->drawEnemies();
 	for (int i = 0; i < PLAY_AREA_WIDTH; ++i) {
 		for (int j = 0; j < PLAY_AREA_HEIGHT; ++j) {
 			this->setSingleTile(console, i, j);
 		}
-	}
+	}	
 	context->present(console);
 }
 
@@ -67,6 +69,10 @@ void Map::setSingleTile(tcod::Console& console, const int& x, const int& y) {
 		break;
 	case Tileset::player:
 		tcod::print(console, { x,y }, toPrint, palette->playerCharacter, std::nullopt);
+		break;
+	case Tileset::goblin:
+		if (this->visited[x][y] == 2) { tcod::print(console, { x,y }, toPrint, palette->goblin, std::nullopt); }
+		else if (this->visited[x][y] == 1) { tcod::print(console, { x,y }, std::string(1,Tileset::floor), level->outOfSightFloor, std::nullopt); }
 		break;
 	default: // Pickups
 		if (this->visited[x][y] == 2) { tcod::print(console, { x,y }, toPrint, level->inSightPickup, std::nullopt); }

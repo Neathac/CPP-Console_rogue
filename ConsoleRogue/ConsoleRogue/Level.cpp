@@ -46,7 +46,7 @@ void Level::generateEasyEnvironment() {
 		this->rooms.push_back(new Room(diameters[i], centers[i][0], centers[i][1], ROOM_TYPE::DISJOINT));
 	}
 	populatePickups();
-	populateEnemies();
+	populateEnemies(4, int(ACTOR_TYPE::GOBLIN));
 }
 
 void Level::populatePickups() {
@@ -64,17 +64,53 @@ void Level::populatePickups() {
 	}
 }
 
-void Level::populateEnemies() {
+void Level::populateEnemies(const int& spawnRate, const int& rangeOfEnemies) {
 	for (auto& room : rooms) {
-		if (getRandomNumber(1, 3) == 1) { // Roughly 1/2 rooms should have pickups
+		if (getRandomNumber(1, spawnRate) == 1) {
 			for (auto& coords : room->actorPositions) {
-				int pickup = getRandomNumber(int(PICKUP_TYPE::DAMAGE), int(PICKUP_TYPE::_count) - 1);
-				if (pickup == int(PICKUP_TYPE::RANGE)) { // More range is pretty overpowered, so we make it very rare
-					pickup = getRandomNumber(int(PICKUP_TYPE::DAMAGE), int(PICKUP_TYPE::_count) - 1);
-				}
-				this->pickups.push_back(new Pickup(PICKUP_TYPE(pickup), coords));
+				int enemy = getRandomNumber(int(ACTOR_TYPE::GOBLIN), rangeOfEnemies);
+				this->hostileActors.push_back(new Actor(ACTOR_TYPE(enemy), coords));
 			}
 
+		}
+	}
+}
+
+void Level::updateEnemies(Map& map, std::shared_ptr<Player> player) {
+	for (auto& enemy : this->hostileActors) {
+		enemy->speed += player->speed;
+		if (enemy->speed + player->speed >= enemy->speedLimit) { // The enemy is allowed to move
+			enemy->speed = enemy->speed % enemy->speedLimit; // Reset the enemy movement
+			if (map.visited[enemy->position[0]][enemy->position[1]] == 2) { // The enemy is in FOV
+				if ((abs(enemy->position[0] - player->position[0]) <= enemy->range) &&
+					(abs(enemy->position[1] - player->position[1]) <= enemy->range)) { // The enemy can reach the player
+					player->health -= enemy->damage / player->armor;
+				}
+				else { // Player not in reach, move towards him
+					if ((player->position[0] - enemy->position[0]) > 0 && // Try to align horizontally first
+						!map.isSightBlocker(enemy->position[0] + 1 ,enemy->position[1])) { // Make sure we don't go into a wall
+						map.tiles[enemy->position[0]][enemy->position[1]] = Tileset::floor;
+						enemy->position[0] += 1;
+					}
+					else if ((player->position[0] - enemy->position[0]) < 0 && // Try to align horizontally first
+						!map.isSightBlocker(enemy->position[0] - 1, enemy->position[1])) {
+						map.tiles[enemy->position[0]][enemy->position[1]] = Tileset::floor;
+						enemy->position[0] -= 1;
+					}
+					else { // We need to move vertically
+						if ((player->position[1] - enemy->position[1]) > 0 && // Try to align horizontally first
+							!map.isSightBlocker(enemy->position[0], enemy->position[1] + 1)) { // Make sure we don't go into a wall
+							map.tiles[enemy->position[0]][enemy->position[1]] = Tileset::floor;
+							enemy->position[1] += 1;
+						}
+						else if ((player->position[1] - enemy->position[1]) < 0 && // Try to align horizontally first
+							!map.isSightBlocker(enemy->position[0], enemy->position[1] - 1)) {
+							map.tiles[enemy->position[0]][enemy->position[1]] = Tileset::floor;
+							enemy->position[1] -= 1;
+						}
+					}
+				}
+			}		
 		}
 	}
 }

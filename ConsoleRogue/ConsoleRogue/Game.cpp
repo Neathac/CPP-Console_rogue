@@ -18,6 +18,9 @@ void Game::playerMove(DIRECTIONS direction) {
 	// This breaks walls in active sight, but the exact same thing in the interraction function does not
 	// Except the very first move. That one does not break walls in active sight
 	this->player->recalculateActiveSight(this->playArea);
+	this->playArea.level->updateEnemies(this->playArea, this->player);
+	this->statSection.drawStatValues(this->console, this->context);
+	this->player->recalculateActiveSight(this->playArea);
 	this->playArea.drawWholeMap(this->console, this->context);
 }
 
@@ -27,8 +30,8 @@ void Game::playerInterract() {
 		for (int i = 0; i < this->playArea.level->hostileActors.size(); ++i) { // We will be erasing elements from vector by position, so we need the index
 			if ((abs(this->playArea.level->hostileActors[i]->position[0] - this->player->position[0]) <= this->player->range) &&
 				(abs(this->playArea.level->hostileActors[i]->position[1] - this->player->position[1]) <= this->player->range) &&
-				(this->playArea.visited[this->playArea.level->hostileActors[i]->position[0]][this->playArea.level->hostileActors[i]->position[1]] == 2)) { // Pickup is both within range and in line of sight
-			//	player.playerAttack(*playArea.level->hostileActors[i]);
+				(this->playArea.visited[this->playArea.level->hostileActors[i]->position[0]][this->playArea.level->hostileActors[i]->position[1]] == 2)) { // Enemy is both within range and in line of sight
+				this->playArea.level->hostileActors[i]->health -= (*player).damage - (this->playArea.level->hostileActors[i]->armor/2);
 				interractionOccured = true;
 				if (this->playArea.level->hostileActors[i]->health < 1) { // Actor was killed
 					this->playArea.tiles[this->playArea.level->hostileActors[i]->position[0]][this->playArea.level->hostileActors[i]->position[1]] = Tileset::floor;
@@ -53,10 +56,9 @@ void Game::playerInterract() {
 			}
 		}
 	}
-	// This doesn't break walls in active sight ?
+	this->statSection.drawStatValues(this->console, this->context);
+	this->playArea.level->updateEnemies(this->playArea, this->player);
 	this->statSection.drawStatValues(this->console, this->context);
 	this->player->recalculateActiveSight(this->playArea);
-	this->playArea.drawWholeMap(this->console, this->context); // Known bug: This just blackens the walls for some reason
-	// It isn't due to a wall being a sightblocker
-	// I suspect it relates to why walls display in the wrong color
+	this->playArea.drawWholeMap(this->console, this->context);
 }

@@ -128,6 +128,7 @@ public:
 
 class Room; // Used by RoomGenerator, but Room uses RoomGenerator too
 class Player; // Used by Map, but Map uses Player too
+class Map;
 
 class RoomGenerator {
 public:
@@ -143,28 +144,28 @@ private:
 
 class Actor {
 public:
-	Actor() {
-		position[0] = 5;
-		position[1] = 5;
+	Actor(ACTOR_TYPE type = ACTOR_TYPE::UNDETERMINED, std::array<int, 2> position = std::array<int, 2>{5,5}) : type(type) {
+		this->position[0] = position[0];
+		this->position[1] = position[1];
 		status = Tileset::floor;
-		visible = false;
 		health = 5;
 		maxHealth = 5;
-		speed = 5;
+		speed = 0;
 		damage = 5;
 		armor = 5;
-		range = 5;
+		range = 2;
+		speedLimit = 100;
 		type = ACTOR_TYPE::_count; // Just for initialization
 	}
 	int position[2];
 	char status; // Store tile the entity replaced (floor is underneath the player) - to open way for possible status effects
-	bool visible;
 	int health;
 	int maxHealth;
 	int speed;
 	int damage;
 	int armor;
 	int range;
+	int speedLimit;
 	void moveActor(const int& xChange, const int& yChange);
 	ACTOR_TYPE type;
 };
@@ -251,6 +252,9 @@ public:
 	void generateEasyEnvironment();
 	void generateMediumEnvironment();
 	void generateDifficultEnvironment();
+
+	void updateEnemies(Map& playArea, std::shared_ptr<Player> player);
+
 	int difficultyLevel;
 	Room* safeRoom;
 	Room* exitRoom;
@@ -266,7 +270,9 @@ public:
 	const tcod::ColorRGB& outOfSightPickup;
 private:
 	void populatePickups();
-	void populateEnemies();
+	void populateEnemies(const int& spawnRate, const int& rangeOfEnemies); 
+	// Pickup spawn rate is constant, but enemy spawn rate needs control
+	// We also want to control what kinds of enemies to spawn
 };
 
 class Map {
@@ -275,7 +281,7 @@ public:
 		palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, palette->outOfSightPickup, palette->inSightPickup, 1)) // The last argument always instantiates level 1 environment
 	{
 		sightBlockers = { Tileset::wall, Tileset::armorPickup, Tileset::damagePickup, Tileset::exit, Tileset::healthRefillPickup,
-			Tileset::healthUpgradePickup, Tileset::rangePickup, Tileset::speedPickup };
+			Tileset::healthUpgradePickup, Tileset::rangePickup, Tileset::speedPickup, Tileset::goblin };
 	}
 	void setupNewPlayArea(Player& player, tcod::Console& console, tcod::ContextPtr& context);
 	void drawWholeMap(tcod::Console& console, tcod::ContextPtr& context);
@@ -310,11 +316,10 @@ public:
 		dirsToCheck.push_back(std::vector < std::array<int, 2>>{
 			std::array<int, 2>{1, 0}, std::array<int, 2>{2, 0}, std::array<int, 2>{3, 0}, std::array<int, 2>{4, 0}, std::array<int, 2>{5, 0}});
 		status = Tileset::floor;
-		visible = true;
+		speed = 80;
 	}
 	void placeSelf(Map& playArea, int x, int y);
 	void recalculateActiveSight(Map& playArea);
-	void playerAttack(Actor& actor);
 	void playerInterract(Pickup& pickup);
 	
 private:
