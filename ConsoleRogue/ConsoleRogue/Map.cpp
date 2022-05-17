@@ -9,6 +9,13 @@
 
 using namespace std;
 
+Map::Map(const std::shared_ptr<Palette> palette) : palette(palette), level(new Level(palette->inSightWoodWall,
+	palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, palette->outOfSightPickup, palette->inSightPickup, 1)) // The last argument always instantiates level 1 environment
+{
+	sightBlockers = { Tileset::wall, Tileset::armorPickup, Tileset::damagePickup, Tileset::exit, Tileset::healthRefillPickup,
+		Tileset::healthUpgradePickup, Tileset::rangePickup, Tileset::speedPickup, Tileset::goblin };
+}
+
 void Map::setupNewPlayArea(Player& player, tcod::Console& console, tcod::ContextPtr& context) {
 	// Set up play area borders
 	for (int i = 0; i < PLAY_AREA_HEIGHT; ++i) {

@@ -3,6 +3,48 @@
 #include "SDL.h"
 #include <vector>
 
+Level::Level(tcod::ColorRGB inSightWall, const tcod::ColorRGB& outOfSightWall,
+	const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor,
+	const tcod::ColorRGB& outOfSightPickup, const tcod::ColorRGB& inSightPickup, const int& difficulty) :
+	inSightWall(inSightWall),
+	inSightFloor(inSightFloor),
+	outOfSightWall(outOfSightWall),
+	outOfSightFloor(outOfSightFloor),
+	difficultyLevel(difficulty),
+	inSightPickup(inSightPickup),
+	outOfSightPickup(outOfSightPickup)
+{
+	int xPolarity;
+	if (getRandomNumber(1, 2) % 2 == 0) {
+		xPolarity = -1;
+	}
+	else {
+		xPolarity = 1;
+	}
+	int yPolarity;
+	if (getRandomNumber(1, 2) % 2 == 0) {
+		yPolarity = -1;
+	}
+	else {
+		yPolarity = 1;
+	}
+
+	safeRoom = new Room(4, PLAY_AREA_WIDTH / 2, PLAY_AREA_HEIGHT / 2, ROOM_TYPE::SAFE_ROOM); // Safe room is always the same
+	exitRoom = new Room(4, (PLAY_AREA_WIDTH / 2) + xPolarity * getRandomNumber(9, (PLAY_AREA_WIDTH / 2) - 5), (PLAY_AREA_HEIGHT / 2) + yPolarity * getRandomNumber(9, (PLAY_AREA_HEIGHT / 2) - 5), ROOM_TYPE::SAFE_ROOM);
+
+	if (difficultyLevel < 3) {
+		corridors.push_back(new Room(*safeRoom, *exitRoom, false));
+		this->generateEasyEnvironment();
+	}
+	/*			else if (difficultyLevel > 2 && difficultyLevel < 6) {
+					this->generateMediumEnvironment();
+				}
+				else if (difficultyLevel > 5) {
+					this->generateDifficultEnvironment();
+				}
+				*/
+}
+
 // TODO: Create a balancing struct containing all the values to be plugged into generating new levels for better modularity
 void Level::generateEasyEnvironment() {
 	int lowLimitOfRooms = PLAY_AREA_WIDTH / 7; // Entirely arbitrary
@@ -46,6 +88,7 @@ void Level::generateEasyEnvironment() {
 		this->rooms.push_back(new Room(diameters[i], centers[i][0], centers[i][1], ROOM_TYPE::DISJOINT));
 	}
 	populatePickups();
+	this->pickups.push_back(new Pickup(PICKUP_TYPE::EXIT, this->exitRoom->center));
 	populateEnemies(4, int(ACTOR_TYPE::GOBLIN));
 }
 

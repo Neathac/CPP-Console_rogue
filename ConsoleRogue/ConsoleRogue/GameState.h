@@ -144,19 +144,7 @@ private:
 
 class Actor {
 public:
-	Actor(ACTOR_TYPE type = ACTOR_TYPE::UNDETERMINED, std::array<int, 2> position = std::array<int, 2>{5,5}) : type(type) {
-		this->position[0] = position[0];
-		this->position[1] = position[1];
-		status = Tileset::floor;
-		health = 5;
-		maxHealth = 5;
-		speed = 0;
-		damage = 5;
-		armor = 5;
-		range = 2;
-		speedLimit = 100;
-		type = ACTOR_TYPE::_count; // Just for initialization
-	}
+	Actor(ACTOR_TYPE type = ACTOR_TYPE::UNDETERMINED, std::array<int, 2> position = std::array<int, 2>{5, 5});
 	int position[2];
 	char status; // Store tile the entity replaced (floor is underneath the player) - to open way for possible status effects
 	int health;
@@ -209,46 +197,8 @@ public:
 class Level {
 public:
 	Level(tcod::ColorRGB inSightWall, const tcod::ColorRGB& outOfSightWall,
-		const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor, 
-		const tcod::ColorRGB& outOfSightPickup, const tcod::ColorRGB& inSightPickup, const int& difficulty) :
-		inSightWall(inSightWall), // Known bug - The saved value isn't once anywhere in the whole project for some reason
-		inSightFloor(inSightFloor), 
-		outOfSightWall(outOfSightWall),
-		outOfSightFloor(outOfSightFloor),
-		difficultyLevel(difficulty),
-		inSightPickup(inSightPickup),
-		outOfSightPickup(outOfSightPickup)
-	{
-			int xPolarity;
-			if (getRandomNumber(1,2)%2 == 0) {
-				xPolarity = -1;
-			}
-			else {
-				xPolarity = 1;
-			}
-			int yPolarity;
-			if (getRandomNumber(1, 2) % 2 == 0) {
-				yPolarity = -1;
-			}
-			else {
-				yPolarity = 1;
-			}
-
-			safeRoom = new Room(4, PLAY_AREA_WIDTH/2, PLAY_AREA_HEIGHT/2, ROOM_TYPE::SAFE_ROOM); // Safe room is always the same
-			exitRoom = new Room(4, (PLAY_AREA_WIDTH / 2) + xPolarity*getRandomNumber(9, (PLAY_AREA_WIDTH / 2)-5), (PLAY_AREA_HEIGHT / 2) + yPolarity * getRandomNumber(9, (PLAY_AREA_HEIGHT / 2) - 5), ROOM_TYPE::SAFE_ROOM);
-			
-			if (difficultyLevel < 3) {
-				corridors.push_back(new Room(*safeRoom, *exitRoom, false));
-				this->generateEasyEnvironment();
-			}
-/*			else if (difficultyLevel > 2 && difficultyLevel < 6) {
-				this->generateMediumEnvironment();
-			}
-			else if (difficultyLevel > 5) {
-				this->generateDifficultEnvironment();
-			}
-			*/
-	}
+		const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor,
+		const tcod::ColorRGB& outOfSightPickup, const tcod::ColorRGB& inSightPickup, const int& difficulty);
 	void generateEasyEnvironment();
 	void generateMediumEnvironment();
 	void generateDifficultEnvironment();
@@ -277,12 +227,7 @@ private:
 
 class Map {
 public:
-	Map(const std::shared_ptr<Palette> palette) : palette(palette), level(new Level(palette->inSightWoodWall,
-		palette->outOfSightWoodWall, palette->inSightGrassFloor, palette->outOfSightGrassFloor, palette->outOfSightPickup, palette->inSightPickup, 1)) // The last argument always instantiates level 1 environment
-	{
-		sightBlockers = { Tileset::wall, Tileset::armorPickup, Tileset::damagePickup, Tileset::exit, Tileset::healthRefillPickup,
-			Tileset::healthUpgradePickup, Tileset::rangePickup, Tileset::speedPickup, Tileset::goblin };
-	}
+	Map(const std::shared_ptr<Palette> palette);
 	void setupNewPlayArea(Player& player, tcod::Console& console, tcod::ContextPtr& context);
 	void drawWholeMap(tcod::Console& console, tcod::ContextPtr& context);
 	void setSingleTile(tcod::Console& console, const int& x, const int& y);
@@ -302,22 +247,7 @@ public:
 
 class Player : public Actor {
 public:
-	Player() {
-		dirsToCheck.push_back(std::vector < std::array<int, 2>>{
-			std::array<int, 2>{0, 1}, std::array<int, 2>{0, 2}, std::array<int, 2>{0, 3}, std::array<int, 2>{0, 4}, std::array<int, 2>{0, 5}});
-		dirsToCheck.push_back(std::vector < std::array<int, 2>>{
-			std::array<int, 2>{0, 1}, std::array<int, 2>{1, 1}, std::array<int, 2>{1, 2}, std::array<int, 2>{1, 3}, std::array<int, 2>{1, 4}});
-		dirsToCheck.push_back(std::vector < std::array<int, 2>>{
-			std::array<int, 2>{0, 1}, std::array<int, 2>{1, 1}, std::array<int, 2>{1, 2}, std::array<int, 2>{2, 2}, std::array<int, 2>{2, 3}});
-		dirsToCheck.push_back(std::vector < std::array<int, 2>>{
-			std::array<int, 2>{1, 0}, std::array<int, 2>{1, 1}, std::array<int, 2>{2, 1}, std::array<int, 2>{2, 2}, std::array<int, 2>{3, 2}});
-		dirsToCheck.push_back(std::vector < std::array<int, 2>>{
-			std::array<int, 2>{1, 0}, std::array<int, 2>{1, 1}, std::array<int, 2>{2, 1}, std::array<int, 2>{3, 1}, std::array<int, 2>{4, 1}});
-		dirsToCheck.push_back(std::vector < std::array<int, 2>>{
-			std::array<int, 2>{1, 0}, std::array<int, 2>{2, 0}, std::array<int, 2>{3, 0}, std::array<int, 2>{4, 0}, std::array<int, 2>{5, 0}});
-		status = Tileset::floor;
-		speed = 80;
-	}
+	Player();
 	void placeSelf(Map& playArea, int x, int y);
 	void recalculateActiveSight(Map& playArea);
 	void playerInterract(Pickup& pickup);
@@ -354,39 +284,10 @@ private:
 
 class Game {
 public:
-	Game(const std::shared_ptr<Palette> palette) :  player(new Player()), playArea(palette), statSection(palette), eventSection(palette) {
-
-		console = tcod::Console{ CONSOLE_WIDTH, CONSOLE_HEIGHT };  // Main console.
-
-		// Configure the context.
-		auto params = TCOD_ContextParams{};
-		params.tcod_version = TCOD_COMPILEDVERSION;  // This is required.
-		params.console = console.get();  // Derive the window size from the console size.
-		params.window_title = "Console Rogue";
-		params.sdl_window_flags = SDL_WINDOW_SHOWN;
-		params.vsync = true;
-		context = tcod::new_context(params);
-
-		// Initialise and sketch out Stat section of console
-		statSection.setPlayer(player);
-		statSection.colorArea(console, context);
-		statSection.drawTextFields(console, context);
-		statSection.drawStatValues(console, context);
-
-		//Initialise play area
-		playArea.setupNewPlayArea(*player ,console, context);
-		
-
-		// Instantiate player vision
-		// This does not cause the bug to manifest
-		player->recalculateActiveSight(playArea);
-		playArea.drawWholeMap(console, context);
-
-		// Initialise eventArea
-		eventSection.colorArea(console, context);
-	}
+	Game(const std::shared_ptr<Palette> palette);
 	void playerMove(DIRECTIONS direction);
 	void playerInterract();
+	void setupNewFloor();
 private:
 	tcod::Console console;
 	tcod::ContextPtr context;
@@ -394,6 +295,7 @@ private:
 	std::shared_ptr<Player> player;
 	PlayerStatSection statSection;
 	EventSection eventSection;
+	std::shared_ptr<Palette> palette;
 };
 
 #endif 

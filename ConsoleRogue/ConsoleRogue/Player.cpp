@@ -3,6 +3,23 @@
 #include "SDL.h"
 #include <vector>
 
+Player::Player() {
+	dirsToCheck.push_back(std::vector < std::array<int, 2>>{
+		std::array<int, 2>{0, 1}, std::array<int, 2>{0, 2}, std::array<int, 2>{0, 3}, std::array<int, 2>{0, 4}, std::array<int, 2>{0, 5}});
+	dirsToCheck.push_back(std::vector < std::array<int, 2>>{
+		std::array<int, 2>{0, 1}, std::array<int, 2>{1, 1}, std::array<int, 2>{1, 2}, std::array<int, 2>{1, 3}, std::array<int, 2>{1, 4}});
+	dirsToCheck.push_back(std::vector < std::array<int, 2>>{
+		std::array<int, 2>{0, 1}, std::array<int, 2>{1, 1}, std::array<int, 2>{1, 2}, std::array<int, 2>{2, 2}, std::array<int, 2>{2, 3}});
+	dirsToCheck.push_back(std::vector < std::array<int, 2>>{
+		std::array<int, 2>{1, 0}, std::array<int, 2>{1, 1}, std::array<int, 2>{2, 1}, std::array<int, 2>{2, 2}, std::array<int, 2>{3, 2}});
+	dirsToCheck.push_back(std::vector < std::array<int, 2>>{
+		std::array<int, 2>{1, 0}, std::array<int, 2>{1, 1}, std::array<int, 2>{2, 1}, std::array<int, 2>{3, 1}, std::array<int, 2>{4, 1}});
+	dirsToCheck.push_back(std::vector < std::array<int, 2>>{
+		std::array<int, 2>{1, 0}, std::array<int, 2>{2, 0}, std::array<int, 2>{3, 0}, std::array<int, 2>{4, 0}, std::array<int, 2>{5, 0}});
+	status = Tileset::floor;
+	speed = 80;
+}
+
 void Player::placeSelf(Map& playArea, int x, int y) {
 	if (!playArea.isSightBlocker(x, y)) {
 		playArea.tiles[this->position[0]][this->position[1]] = this->status; // Leave a character where the player used to be
@@ -40,7 +57,7 @@ void Player::playerInterract(Pickup& pickup) {
 		this->damage += 1;
 		break;
 	case PICKUP_TYPE::HEALTH_REFILL:
-		this->health = this->maxHealth;
+		this->health += (this->maxHealth - this->health);
 		break;
 	case PICKUP_TYPE::HEALTH_UPGRADE:
 		this->maxHealth += 2;
@@ -49,7 +66,7 @@ void Player::playerInterract(Pickup& pickup) {
 		this->range += 1;
 		break;
 	case PICKUP_TYPE::SPEED:
-		this->speed += 5;
+		this->speed -= 5;
 		break;
 	}
 }
