@@ -9,7 +9,7 @@ Actor::Actor(ACTOR_TYPE type, std::array<int, 2> position) : type(type) {
 	speed = 0;
 	damage = 5;
 	armor = 5;
-	range = 2;
+	range = 1;
 	speedLimit = 100;
 	type = ACTOR_TYPE::_count; // Just for initialization
 }

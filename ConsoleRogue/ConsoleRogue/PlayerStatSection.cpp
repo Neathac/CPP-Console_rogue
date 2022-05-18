@@ -21,7 +21,7 @@ void PlayerStatSection::drawTextFields(tcod::Console& console, tcod::ContextPtr&
 void PlayerStatSection::drawStatValues(tcod::Console& console, tcod::ContextPtr& context) {
 	tcod::print(console, { PLAY_AREA_WIDTH + 9,  6 }, std::to_string(this->player->health) + "/" + std::to_string(this->player->maxHealth), this->palette->statHeaders, this->palette->statBackground);
 	tcod::print(console, { PLAY_AREA_WIDTH + 9,  8 }, std::to_string(this->player->damage), this->palette->statHeaders, this->palette->statBackground);
-	tcod::print(console, { PLAY_AREA_WIDTH + 9,  10 }, std::to_string(this->player->speed), this->palette->statHeaders, this->palette->statBackground);
+	tcod::print(console, { PLAY_AREA_WIDTH + 9,  10 }, std::to_string(100-this->player->speed), this->palette->statHeaders, this->palette->statBackground);
 	tcod::print(console, { PLAY_AREA_WIDTH + 9,  12 }, std::to_string(this->player->armor), this->palette->statHeaders, this->palette->statBackground);
 	tcod::print(console, { PLAY_AREA_WIDTH + 9,  14 }, std::to_string(this->player->range), this->palette->statHeaders, this->palette->statBackground);
 	context->present(console);

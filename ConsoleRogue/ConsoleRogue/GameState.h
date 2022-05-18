@@ -19,7 +19,7 @@
 #undef main
 #include <vector>
 #include <random>
-#include <queue>
+#include <deque>
 #include <iostream>
 
 static int getRandomNumber(const int& from, const int& to) {
@@ -130,6 +130,19 @@ class Room; // Used by RoomGenerator, but Room uses RoomGenerator too
 class Player; // Used by Map, but Map uses Player too
 class Map;
 
+class EventSection {
+public:
+	EventSection(const std::shared_ptr<Palette> palette) : palette(palette) {}
+	void colorArea(tcod::Console& console, tcod::ContextPtr& context);
+	void newEvent(tcod::Console& console, tcod::ContextPtr& context, std::string eventDescription);
+private:
+	// TODO: Make types of events so they could be drawn in different colors?
+	// Could possibly remove the need for a palette pointer
+	void drawEvents(tcod::Console& console, tcod::ContextPtr& context);
+	std::shared_ptr<Palette> palette;
+	std::deque<std::string> events;
+};
+
 class RoomGenerator {
 public:
 	static void generateSafeRoom(Room& room);
@@ -200,10 +213,10 @@ public:
 		const tcod::ColorRGB& inSightFloor, const tcod::ColorRGB& outOfSightFloor,
 		const tcod::ColorRGB& outOfSightPickup, const tcod::ColorRGB& inSightPickup, const int& difficulty);
 	void generateEasyEnvironment();
-	void generateMediumEnvironment();
-	void generateDifficultEnvironment();
+	// void generateMediumEnvironment(); - Here lie the reminders of ambitions of the past
+	// void generateDifficultEnvironment(); - May they rest undisturbed
 
-	void updateEnemies(Map& playArea, std::shared_ptr<Player> player);
+	void updateEnemies(Map& playArea, std::shared_ptr<Player> player, EventSection& events, tcod::Console& console, tcod::ContextPtr& context);
 
 	int difficultyLevel;
 	Room* safeRoom;
@@ -269,18 +282,7 @@ private:
 	std::shared_ptr<Player> player;
 };
 
-class EventSection {
-public:
-	EventSection(const std::shared_ptr<Palette> palette) : palette(palette) {}
-	void colorArea(tcod::Console& console, tcod::ContextPtr& context);
-	void newEvent(tcod::Console& console, tcod::ContextPtr& context, std::string eventDescription);
-private:
-	// TODO: Make types of events so they could be drawn in different colors?
-	// Could possibly remove the need for a palette pointer
-	void drawEvents(tcod::Console& console, tcod::ContextPtr& context);
-	std::shared_ptr<Palette> palette;
-	std::queue<std::string> events;
-};
+
 
 class Game {
 public:

@@ -35,23 +35,36 @@ void Game::playerMove(DIRECTIONS direction) {
 	switch (direction) {
 	case DIRECTIONS::MOVE_DOWN:
 		this->player->placeSelf(this->playArea, this->player->position[0], this->player->position[1] + 1);
+		this->eventSection.newEvent(console, context, "You moved south");
 		break;
 	case DIRECTIONS::MOVE_UP:
 		this->player->placeSelf(this->playArea, this->player->position[0], this->player->position[1] - 1);
+		this->eventSection.newEvent(console, context, "You moved north");
 		break;
 	case DIRECTIONS::MOVE_LEFT:
 		this->player->placeSelf(this->playArea, this->player->position[0] - 1, this->player->position[1]);
+		this->eventSection.newEvent(console, context, "You moved west");
 		break;
 	case DIRECTIONS::MOVE_RIGHT:
 		this->player->placeSelf(this->playArea, this->player->position[0] + 1, this->player->position[1]);
+		this->eventSection.newEvent(console, context, "You moved east");
 		break;
 	}
 
-	this->player->recalculateActiveSight(this->playArea);
-	this->playArea.level->updateEnemies(this->playArea, this->player);
-	this->statSection.drawStatValues(this->console, this->context);
-	this->player->recalculateActiveSight(this->playArea);
-	this->playArea.drawWholeMap(this->console, this->context);
+	if (this->playArea.level->difficultyLevel < 3) {
+		this->player->recalculateActiveSight(this->playArea);
+		this->playArea.level->updateEnemies(this->playArea, this->player, this->eventSection, console, context);
+		if (this->player->health < 1) {
+			this->playArea.level->difficultyLevel = 3;
+			TCOD_console_clear(console.get());
+			tcod::print(console, { PLAY_AREA_WIDTH / 2, PLAY_AREA_HEIGHT / 2 }, "You died!", this->palette->statHeaders, std::nullopt);
+			context->present(console);
+			return;
+		}
+		this->statSection.drawStatValues(this->console, this->context);
+		this->player->recalculateActiveSight(this->playArea);
+		this->playArea.drawWholeMap(this->console, this->context);
+	}
 }
 
 void Game::playerInterract() {
@@ -62,10 +75,12 @@ void Game::playerInterract() {
 				(abs(this->playArea.level->hostileActors[i]->position[1] - this->player->position[1]) <= this->player->range) &&
 				(this->playArea.visited[this->playArea.level->hostileActors[i]->position[0]][this->playArea.level->hostileActors[i]->position[1]] == 2)) { // Enemy is both within range and in line of sight
 				this->playArea.level->hostileActors[i]->health -= (*player).damage - (this->playArea.level->hostileActors[i]->armor/2);
+				this->eventSection.newEvent(console, context, "You damaged a goblin for " + std::to_string((*player).damage - (this->playArea.level->hostileActors[i]->armor / 2)) + " damage!");
 				interractionOccured = true;
 				if (this->playArea.level->hostileActors[i]->health < 1) { // Actor was killed
 					this->playArea.tiles[this->playArea.level->hostileActors[i]->position[0]][this->playArea.level->hostileActors[i]->position[1]] = Tileset::floor;
 					this->playArea.level->hostileActors.erase(this->playArea.level->hostileActors.begin() + i);
+					this->eventSection.newEvent(console, context, "You killed a goblin");
 				}
 				break; // Only one interraction per action premitted
 			}
@@ -82,7 +97,14 @@ void Game::playerInterract() {
 				this->player->playerInterract(*this->playArea.level->pickups[i]);
 				this->playArea.tiles[this->playArea.level->pickups[i]->position[0]][this->playArea.level->pickups[i]->position[1]] = Tileset::floor;
 				if (this->playArea.level->pickups[i]->type == PICKUP_TYPE::EXIT) { // Player found and entered the exit
+
 					this->setupNewFloor();
+					this->eventSection.newEvent(console, context, "You entered a new floor");
+					if (this->playArea.level->difficultyLevel < 3) {
+						TCOD_console_clear(console.get());
+						tcod::print(console, { PLAY_AREA_WIDTH/2, PLAY_AREA_HEIGHT/2 }, "You won!", this->palette->statHeaders, std::nullopt);
+						context->present(console);
+					}
 					return;
 				}
 				this->playArea.level->pickups.erase(this->playArea.level->pickups.begin()+i); // Pickups are one-time use only
@@ -90,11 +112,20 @@ void Game::playerInterract() {
 			}
 		}
 	}
-	this->statSection.drawStatValues(this->console, this->context);
-	this->playArea.level->updateEnemies(this->playArea, this->player);
-	this->statSection.drawStatValues(this->console, this->context);
-	this->player->recalculateActiveSight(this->playArea);
-	this->playArea.drawWholeMap(this->console, this->context);
+	if (this->playArea.level->difficultyLevel < 3) {
+		this->statSection.drawStatValues(this->console, this->context);
+		this->playArea.level->updateEnemies(this->playArea, this->player, this->eventSection, console, context);
+		if (this->player->health < 1) {
+			this->playArea.level->difficultyLevel = 3;
+			TCOD_console_clear(console.get());
+			tcod::print(console, { PLAY_AREA_WIDTH / 2, PLAY_AREA_HEIGHT / 2 }, "You died!", this->palette->statHeaders, std::nullopt);
+			context->present(console);
+			return;
+		}
+		this->statSection.drawStatValues(this->console, this->context);
+		this->player->recalculateActiveSight(this->playArea);
+		this->playArea.drawWholeMap(this->console, this->context);
+	}
 }
 
 void Game::setupNewFloor() {

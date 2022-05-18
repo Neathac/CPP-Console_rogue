@@ -18,6 +18,7 @@ Player::Player() {
 		std::array<int, 2>{1, 0}, std::array<int, 2>{2, 0}, std::array<int, 2>{3, 0}, std::array<int, 2>{4, 0}, std::array<int, 2>{5, 0}});
 	status = Tileset::floor;
 	speed = 80;
+	range = 2;
 }
 
 void Player::placeSelf(Map& playArea, int x, int y) {

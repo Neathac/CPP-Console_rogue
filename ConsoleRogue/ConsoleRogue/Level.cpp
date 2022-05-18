@@ -119,7 +119,7 @@ void Level::populateEnemies(const int& spawnRate, const int& rangeOfEnemies) {
 	}
 }
 
-void Level::updateEnemies(Map& map, std::shared_ptr<Player> player) {
+void Level::updateEnemies(Map& map, std::shared_ptr<Player> player, EventSection& events, tcod::Console& console, tcod::ContextPtr& context) {
 	for (auto& enemy : this->hostileActors) {
 		enemy->speed += player->speed;
 		if (enemy->speed + player->speed >= enemy->speedLimit) { // The enemy is allowed to move
@@ -128,6 +128,7 @@ void Level::updateEnemies(Map& map, std::shared_ptr<Player> player) {
 				if ((abs(enemy->position[0] - player->position[0]) <= enemy->range) &&
 					(abs(enemy->position[1] - player->position[1]) <= enemy->range)) { // The enemy can reach the player
 					player->health -= enemy->damage / player->armor;
+					events.newEvent(console, context, "A goblin damaged you for " + std::to_string(enemy->damage / player->armor));
 				}
 				else { // Player not in reach, move towards him
 					if ((player->position[0] - enemy->position[0]) > 0 && // Try to align horizontally first
